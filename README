@@ -1,0 +1,53 @@
+20160707 junha hyung
+hw3 computer networks
+
+
+I implemented most of the codes in sr_router.c, and sweep_req funcion in sr_arpcache.c.
+Sr_handlepacket is called every time when a packet arrives to the router.
+I divide it into two cases, 1> when arp arrives, 2> when ip arrives.
+For 1> I implemented sr_handlearp.In sr_handlearp, I also divided it into 2 cases, first--> arp_request, second --> arp_reply.
+For the request, you simply make a arp reply packet using malloc, and send it back to where it came from.
+For the second case, arp reply, I first cached it using sr_arpcache_insert in the arp cache.
+Then I sent all the packets that are in the request structure, using the while loop.
+ThenI destroyed the request.
+
+For the second case, when it was ip, I handled it with sr_handleip.
+In sr_handleip, I first checked if packet had ttl =1.
+Then without processing it, I discarded the packet by doing nothing
+and made icmp timeout packet using malloc, and sent it to where it came from.
+I thought I did everything worked, but when I tried traceroute, it had
+little errors, and traceroute only partly works.
+I do not know the exact reason.
+If ttl is not 1, I checked if the packet was to the router.
+If then, it should be only icmp echo request, and otherwise I discarded the packet and sent port unreachable.
+For echo request, I made echo reply and then sent it back.
+If the packet was to somewhere else, I first checked the routing table, and if
+it could not be matched, I sent icmp net unreachable.
+If there was matching gateway, I checked cache by using sr_arpcache_lookup.
+If there was corresponding entry, I forwarded the packet.
+Else, I saved it in the arpcache queue by using sr_arpcache_queuereq.
+Then, used called handle_arpreq, which does exactly same job as described in
+arpcache.h
+For sr_arpcache_sweepreqs, I also used handle_arpreq function, which will be called every second in that function
+In addition, I wrote some function of my own such as process_sr_packet for
+changing mac addresses and interfaces easily.
+
+
+<Chanllenges>
+Debugging was really diffcult. I had to use tools like wireshark and gdb,
+which I am not very familiar with.
+Also sometimes mininet would not simply work.
+In addition, code was too long so it was difficult to find minor mistakes.
+Edge cases: sending icmp with different types, sending chunked packets, sending packets with different protocols.
+
+Testing
+Honestly I did not have much time so I could not test thoroughly.
+But I tried to use wireshark as much as possible, and I think I got familiar with it. Also, I used print functoins in sr_utils.c
+
+Remaining bugs
+Traceroute does not work perfectly - there is little problem with my icmp packet.
+I cannot figure out why...
+
+modified files
+sr_arpcache.c
+sr_router.c, h
